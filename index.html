@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title># PrimeNest Database SQL
+
+```sql
+-- Create properties table
+CREATE TABLE properties (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  property_type VARCHAR(50) NOT NULL, -- 'House', 'Apartment', 'Land', 'Office'
+  listing_type VARCHAR(50) NOT NULL, -- 'Sale', 'Rent'
+  price DECIMAL(12, 2) NOT NULL,
+  bedrooms INTEGER,
+  bathrooms INTEGER,
+  square_feet INTEGER,
+  address VARCHAR(255) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(50) NOT NULL,
+  zip_code VARCHAR(10),
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  image_urls TEXT[], -- Array of image URLs
+  features TEXT[], -- Array of features
+  year_built INTEGER,
+  property_condition VARCHAR(100),
+  broker_fee BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Create admin users table
+CREATE TABLE admin_users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  is_super_admin BOOLEAN DEFAULT FALSE
+);
+
+-- Create indexes for better query performance
+CREATE INDEX idx_properties_type ON properties(property_type);
+CREATE INDEX idx_properties_listing_type ON properties(listing_type);
+CREATE INDEX idx_properties_city ON properties(city);
+CREATE INDEX idx_properties_state ON properties(state);
+CREATE INDEX idx_properties_price ON properties(price);
+CREATE INDEX idx_properties_active ON properties(is_active);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for properties (public read, admin write)
+CREATE POLICY "Enable read access for all users" ON properties
+  FOR SELECT USING (is_active = TRUE);
+
+CREATE POLICY "Enable insert for authenticated admin users" ON properties
+  FOR INSERT WITH CHECK (
+    auth.uid() IN (SELECT id FROM admin_users)
+  );
+
+CREATE POLICY "Enable update for admin users" ON properties
+  FOR UPDATE USING (
+    auth.uid() IN (SELECT id FROM admin_users)
+  )
+  WITH CHECK (
+    auth.uid() IN (SELECT id FROM admin_users)
+  );
+
+CREATE POLICY "Enable delete for admin users" ON properties
+  FOR DELETE USING (
+    auth.uid() IN (SELECT id FROM admin_users)
+  );
+
+-- RLS Policies for admin_users (admin only)
+CREATE POLICY "Enable read for authenticated users" ON admin_users
+  FOR SELECT USING (auth.uid() IN (SELECT id FROM admin_users));
+
+CREATE POLICY "Enable insert for super admin only" ON admin_users
+  FOR INSERT WITH CHECK (
+    auth.uid() IN (SELECT id FROM admin_users WHERE is_super_admin = TRUE)
+  );
+
+CREATE POLICY "Enable update for super admin only" ON admin_users
+  FOR UPDATE USING (
+    auth.uid() IN (SELECT id FROM admin_users WHERE is_super_admin = TRUE)
+  );
+```
+
+Run this SQL in your Supabase SQL Editor to create the necessary tables and security policies for PrimeNest.</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
