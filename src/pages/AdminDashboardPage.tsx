@@ -1,278 +1,434 @@
-// components/admin/PropertyForm.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { Property } from '../../lib/supabase';
-
-interface PropertyFormProps {
-  property?: Property | null;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-export function PropertyForm({ property, onClose, onSuccess }: PropertyFormProps) {
-  const [formData, setFormData] = useState({
-    title: property?.title || '',
-    description: property?.description || '',
-    property_type: property?.property_type || 'House',
-    listing_type: property?.listing_type || 'Sale',
-    price: property?.price || '',
-    bedrooms: property?.bedrooms || '',
-    bathrooms: property?.bathrooms || '',
-    square_feet: property?.square_feet || '',
-    address: property?.address || '',
-    city: property?.city || '',
-    state: property?.state || '',
-    zip_code: property?.zip_code || '',
-    year_built: property?.year_built || '',
-    property_condition: property?.property_condition || 'Good',
-  });
-
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>(property?.image_urls || []);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle paste from clipboard
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase, Property, ContactMessage } from '../lib/supabase'
+import { PropertyTable } from '../components/admin/PropertyTable'
+import { PropertyForm } from '../components/admin/PropertyForm'
+import {
+  LogOut,
+  Plus,
+  Home,
+  DollarSign,
+  Building,
+  Loader2,
+  Mail,
+  Eye,
+  Trash2,
+  MessageSquare,
+  X,
+} from 'lucide-react'
+export function AdminDashboardPage() {
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [properties, setProperties] = useState<Property[]>([])
+  const [messages, setMessages] = useState<ContactMessage[]>([])
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null)
+  const [activeTab, setActiveTab] = useState<'properties' | 'messages'>(
+    'properties',
+  )
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(
+    null,
+  )
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      const imageItems = Array.from(items).filter(item => item.type.indexOf('image') !== -1);
-      
-      imageItems.forEach(item => {
-        const file = item.getAsFile();
-        if (file) {
-          handleNewImageFile(file);
-        }
-      });
-    };
-
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
-  }, []);
-
-  const handleNewImageFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please paste or upload an image file');
-      return;
+    checkUser()
+    fetchProperties()
+    fetchMessages()
+  }, [])
+  const checkUser = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) {
+      navigate('/admin/login')
     }
-
-    setImageFiles(prev => [...prev, file]);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        setImagePreviews(prev => [...prev, e.target!.result as string]);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    files.forEach(file => handleNewImageFile(file));
-    // Reset input
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const removeImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const uploadImages = async (): Promise<string[]> => {
-    const uploadedUrls: string[] = [];
-
-    for (const file of imageFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `properties/${fileName}`;
-
-      const { error } = await supabase.storage
-        .from('property-images') // Make sure this bucket exists in Supabase
-        .upload(filePath, file, { upsert: true });
-
-      if (error) {
-        console.error('Upload error:', error);
-        continue;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('property-images')
-        .getPublicUrl(filePath);
-
-      uploadedUrls.push(urlData.publicUrl);
-    }
-
-    return uploadedUrls;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
-    setError('');
-
+  }
+  const fetchProperties = async () => {
+    setLoading(true)
     try {
-      let imageUrls: string[] = [...(property?.image_urls || [])];
-
-      // Upload new images if any
-      if (imageFiles.length > 0) {
-        const newUrls = await uploadImages();
-        imageUrls = [...imageUrls, ...newUrls];
-      }
-
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price as string),
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms as string) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms as string) : null,
-        square_feet: formData.square_feet ? parseInt(formData.square_feet as string) : null,
-        year_built: formData.year_built ? parseInt(formData.year_built as string) : null,
-        image_urls: imageUrls,
-        status: 'active',
-      };
-
-      let result;
-      if (property) {
-        // Update existing
-        result = await supabase
-          .from('properties')
-          .update(payload)
-          .eq('id', property.id);
-      } else {
-        // Insert new
-        result = await supabase.from('properties').insert([payload]);
-      }
-
-      if (result.error) throw result.error;
-
-      onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save property');
-      console.error(err);
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', {
+          ascending: false,
+        })
+      if (error) throw error
+      setProperties(data as Property[])
+    } catch (error) {
+      console.error('Error fetching properties:', error)
     } finally {
-      setUploading(false);
+      setLoading(false)
     }
-  };
-
+  }
+  const fetchMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', {
+          ascending: false,
+        })
+      if (error) throw error
+      setMessages((data as ContactMessage[]) || [])
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    }
+  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/admin/login')
+  }
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this property?')) {
+      try {
+        const { error } = await supabase
+          .from('properties')
+          .delete()
+          .eq('id', id)
+        if (error) throw error
+        fetchProperties()
+      } catch (error) {
+        console.error('Error deleting property:', error)
+        alert('Failed to delete property')
+      }
+    }
+  }
+  const handleDeleteMessage = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this message?')) {
+      try {
+        const { error } = await supabase
+          .from('contact_messages')
+          .delete()
+          .eq('id', id)
+        if (error) throw error
+        fetchMessages()
+        if (selectedMessage?.id === id) {
+          setSelectedMessage(null)
+        }
+      } catch (error) {
+        console.error('Error deleting message:', error)
+        alert('Failed to delete message')
+      }
+    }
+  }
+  const handleMarkAsRead = async (message: ContactMessage) => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({
+          is_read: true,
+        })
+        .eq('id', message.id)
+      if (error) throw error
+      fetchMessages()
+      setSelectedMessage({
+        ...message,
+        is_read: true,
+      })
+    } catch (error) {
+      console.error('Error updating message:', error)
+    }
+  }
+  const openNewForm = () => {
+    setEditingProperty(null)
+    setIsFormOpen(true)
+  }
+  const openEditForm = (property: Property) => {
+    setEditingProperty(property)
+    setIsFormOpen(true)
+  }
+  const handleFormSuccess = () => {
+    setIsFormOpen(false)
+    fetchProperties()
+  }
+  // Stats
+  const totalProperties = properties.length
+  const activeProperties = properties.filter(
+    (p) => p.status === 'active',
+  ).length
+  const forSale = properties.filter((p) => p.listing_type === 'sale').length
+  const forRent = properties.filter((p) => p.listing_type === 'rent').length
+  const unreadMessages = messages.filter((m) => !m.is_read).length
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {property ? 'Edit Property' : 'Add New Property'}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="h-6 w-6" />
+    <div className="min-h-screen bg-gray-100">
+      {/* Admin Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <img
+              className="h-8 w-auto mr-3"
+              src="https://cdn.magicpatterns.com/uploads/3NxxoEL58UE9ykVMswL9n3/Prime_logo.png"
+              alt="PrimeNest Logo"
+            />
+            <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center text-gray-600 hover:text-gray-900 font-medium"
+          >
+            <LogOut className="h-5 w-5 mr-2" />
+            Sign Out
           </button>
         </div>
+      </header>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-              <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                <Home className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Total Properties
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {totalProperties}
+                </p>
+              </div>
             </div>
           </div>
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-green-100 text-green-600">
+                <DollarSign className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">For Sale</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {forSale}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+                <Building className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">For Rent</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {forRent}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                <div className="h-6 w-6 flex items-center justify-center font-bold">
+                  A
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Active Listings
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {activeProperties}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-red-100 text-red-600">
+                <MessageSquare className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Unread Messages
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {unreadMessages}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Image Upload Section - SMART UPLOAD */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Property Images (Click, Drag & Drop, or Paste with Ctrl/Cmd + V)
-            </label>
+        {/* Tabs */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('properties')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'properties' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+              >
+                Properties
+              </button>
+              <button
+                onClick={() => setActiveTab('messages')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === 'messages' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+              >
+                Contact Messages
+                {unreadMessages > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {unreadMessages}
+                  </span>
+                )}
+              </button>
+            </nav>
+          </div>
+        </div>
 
-            <div
-              className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                Array.from(e.dataTransfer.files).forEach(file => handleNewImageFile(file));
-              }}
-            >
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-              <p className="text-gray-600 font-medium">Click to upload or drag images here</p>
-              <p className="text-sm text-gray-500 mt-1">You can also paste images directly (Ctrl/Cmd + V)</p>
+        {/* Content */}
+        {activeTab === 'properties' ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">
+                Manage Properties
+              </h2>
+              <button
+                onClick={openNewForm}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Property
+              </button>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-
-            {/* Image Previews */}
-            {imagePreviews.length > 0 && (
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index}`}
-                      className="w-full h-40 object-cover rounded-lg border"
-                    />
+            <div className="p-6">
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : (
+                <PropertyTable
+                  properties={properties}
+                  onEdit={openEditForm}
+                  onDelete={handleDelete}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Messages List */}
+            <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900">Messages</h2>
+              </div>
+              <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    No messages yet
+                  </div>
+                ) : (
+                  messages.map((message) => (
                     <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      key={message.id}
+                      onClick={() => {
+                        setSelectedMessage(message)
+                        if (!message.is_read) {
+                          handleMarkAsRead(message)
+                        }
+                      }}
+                      className={`w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors ${selectedMessage?.id === message.id ? 'bg-blue-50' : ''} ${!message.is_read ? 'bg-yellow-50' : ''}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-medium text-gray-900 truncate">
+                          {message.name}
+                        </span>
+                        {!message.is_read && (
+                          <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        {message.subject}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(message.created_at).toLocaleDateString()}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Message Detail */}
+            <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+              {selectedMessage ? (
+                <div className="h-full flex flex-col">
+                  <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 className="text-lg font-medium text-gray-900">
+                      Message Details
+                    </h2>
+                    <button
+                      onClick={() => handleDeleteMessage(selectedMessage.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="p-6 flex-grow">
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            {selectedMessage.name}
+                          </h3>
+                          <p className="text-gray-600">
+                            {selectedMessage.email}
+                          </p>
+                          {selectedMessage.phone && (
+                            <p className="text-gray-600">
+                              {selectedMessage.phone}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {new Date(
+                            selectedMessage.created_at,
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-gray-500 mb-1">Subject</p>
+                        <p className="font-medium text-gray-900">
+                          {selectedMessage.subject}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">Message</p>
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {selectedMessage.message}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <a
+                        href={`mailto:${selectedMessage.email}`}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Reply via Email
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500 p-6">
+                  <div className="text-center">
+                    <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Select a message to view details</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+        )}
+      </main>
 
-          {/* Rest of the form fields (description, type, address, etc.) */}
-          {/* ... You can keep your existing form fields here ... */}
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          <div className="flex justify-end gap-3 pt-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={uploading}
-              className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 flex items-center gap-2"
-            >
-              {uploading && <Loader2 className="animate-spin h-5 w-5" />}
-              {property ? 'Update Property' : 'Add Property'}
-            </button>
-          </div>
-        </form>
-      </div>
+      {isFormOpen && (
+        <PropertyForm
+          property={editingProperty}
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={handleFormSuccess}
+        />
+      )}
     </div>
-  );
+  )
 }
