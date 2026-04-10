@@ -1,15 +1,17 @@
 // generate-sitemap.js
-const { generateSitemap } = require('./lib/sitemap.js');
-const fs = require('fs');
-const path = require('path');
+import { generateSitemap } from './lib/sitemap.js';
+import fs from 'fs';
+import path from 'path';
 
-const publicDir = path.join(process.cwd(), 'public');
+const distDir = path.join(process.cwd(), 'dist');
 
-if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir, { recursive: true });
+if (!fs.existsSync(distDir)) {
+  fs.mkdirSync(distDir, { recursive: true });
 }
 
 const sitemap = generateSitemap();
-fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemap, 'utf-8');
 
-console.log('✅ Sitemap generated successfully → public/sitemap.xml');
+// ✅ IMPORTANT: write to dist (Vercel serves from here)
+fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemap, 'utf-8');
+
+console.log('✅ Sitemap generated → dist/sitemap.xml');
