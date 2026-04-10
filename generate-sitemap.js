@@ -1,5 +1,4 @@
-// generate-sitemap.js
-import { generateSitemap } from './lib/sitemap.js';
+import { generateSitemap } from './lib/sitemap-generator.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -11,7 +10,6 @@ if (!fs.existsSync(distDir)) {
 
 const sitemap = generateSitemap();
 
-// ✅ IMPORTANT: write to dist (Vercel serves from here)
 fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemap, 'utf-8');
 
 console.log('✅ Sitemap generated → dist/sitemap.xml');
