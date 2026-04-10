@@ -1,7 +1,7 @@
 // generate-sitemap.js
-import { generateSitemap } from './lib/sitemap.js';
-import fs from 'fs';
-import path from 'path';
+const { generateSitemap } = require('./lib/sitemap.js');
+const fs = require('fs');
+const path = require('path');
 
 const publicDir = path.join(process.cwd(), 'public');
 
