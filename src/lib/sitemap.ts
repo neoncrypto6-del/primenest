@@ -1,46 +1,43 @@
+// lib/sitemap.ts
 import { seoPages } from './seoPages';
 
 const DOMAIN = 'https://www.theprimenest.online';
 
 export function generateSitemap(): string {
-  const staticPages = [
-  '',
-  '/listings',
-  '/contact',
-  '/about',
-  '/privacy',
-  '/terms'];
-
-
   const today = new Date().toISOString().split('T')[0];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-  // Add static pages
-  staticPages.forEach((page) => {
+  // Static Pages
+  const staticPages = [
+    { url: '', priority: '1.0', changefreq: 'daily' },
+    { url: '/listings', priority: '0.9', changefreq: 'daily' },
+    { url: '/contact', priority: '0.8', changefreq: 'monthly' },
+    { url: '/about', priority: '0.8', changefreq: 'monthly' },
+    { url: '/privacy', priority: '0.5', changefreq: 'yearly' },
+    { url: '/terms', priority: '0.5', changefreq: 'yearly' },
+  ];
+
+  staticPages.forEach(({ url, priority, changefreq }) => {
     xml += `  <url>\n`;
-    xml += `    <loc>${DOMAIN}${page}</loc>\n`;
+    xml += `    <loc>${DOMAIN}${url}</loc>\n`;
     xml += `    <lastmod>${today}</lastmod>\n`;
-    xml += `    <changefreq>${page === '' || page === '/listings' ? 'daily' : 'monthly'}</changefreq>\n`;
-    xml += `    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n`;
+    xml += `    <changefreq>${changefreq}</changefreq>\n`;
+    xml += `    <priority>${priority}</priority>\n`;
     xml += `  </url>\n`;
   });
 
-  // Add SEO location pages
+  // SEO Location Pages (All 50+ from seoPages.ts)
   seoPages.forEach((page) => {
     xml += `  <url>\n`;
     xml += `    <loc>${DOMAIN}/${page.slug}</loc>\n`;
     xml += `    <lastmod>${today}</lastmod>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
-    xml += `    <priority>0.9</priority>\n`;
+    xml += `    <priority>0.85</priority>\n`;
     xml += `  </url>\n`;
   });
 
   xml += `</urlset>`;
-
   return xml;
 }
-
-// In a real Node.js environment, you would write this to public/sitemap.xml
-// fs.writeFileSync('./public/sitemap.xml', generateSitemap())
