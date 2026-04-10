@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon (you have favicon.png in public folder) -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Primary SEO Title & Description -->
+    <title>PrimeNest | Homes, Land & Apartments for Sale & Rent in All 50 US States</title>
+    <meta name="description" content="Browse houses for sale, land for sale, and apartments for rent across all 50 US states. Find real estate listings in Alabama, Alaska, Arizona, California, Florida, Texas, New York and every other state with PrimeNest.">
+
+    <!-- Keywords for broader search coverage -->
+    <meta name="keywords" content="homes for sale, land for sale, apartments for rent, houses for sale USA, real estate listings, property for sale, apartments for rent all states, land for sale in California, homes for sale in Texas, apartments for rent in Florida, real estate nationwide">
+
+    <!-- Open Graph Meta Tags (for beautiful link previews on Facebook, LinkedIn, WhatsApp, etc.) -->
+    <meta property="og:title" content="PrimeNest - Homes, Land & Apartments for Sale & Rent Across America" />
+    <meta property="og:description" content="Discover thousands of properties for sale and rent in every US state: Alabama, Alaska, Arizona, California, Florida, Texas, New York and more." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://primenest-housing-land-apartments-online.vercel.app" />
+    <meta property="og:image" content="https://primenest-housing-land-apartments-online.vercel.app/og-image.jpg" /> <!-- Recommended: 1200x630px image -->
+    <meta property="og:site_name" content="PrimeNest" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PrimeNest - Real Estate in All 50 States" />
+    <meta name="twitter:description" content="Houses, land, and apartments for sale & rent nationwide." />
+    <meta name="twitter:image" content="https://primenest-housing-land-apartments-online.vercel.app/og-image.jpg" />
+
+    <!-- SEO Indexing -->
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://primenest-housing-land-apartments-online.vercel.app" />
+
+    <!-- Structured Data (JSON-LD) for better rich results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PrimeNest",
+      "url": "https://primenest-housing-land-apartments-online.vercel.app",
+      "description": "Nationwide platform for homes, land, and apartments for sale and rent in all 50 US states.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://primenest-housing-land-apartments-online.vercel.app/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
