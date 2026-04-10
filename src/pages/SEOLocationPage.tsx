@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import {
   ChevronRight,
   MapPin,
@@ -47,6 +46,29 @@ export function SEOLocationPage() {
     }
 
     setPageData(foundPage);
+
+    // ✅ SAFE SEO (REPLACES HELMET)
+    document.title = foundPage.title;
+
+    let metaDesc = document.querySelector("meta[name='description']");
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', foundPage.metaDescription);
+
+    let canonical = document.querySelector("link[rel='canonical']");
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute(
+      'href',
+      `https://www.theprimenest.online/${foundPage.slug}`
+    );
+
     fetchListings(foundPage);
   }, [slug]);
 
@@ -85,15 +107,7 @@ export function SEOLocationPage() {
     return <Navigate to="/" />;
   }
 
-  if (!loading && !pageData) {
-    return (
-      <div className="p-10 text-center text-red-500">
-        ❌ Page not found for slug: {slug}
-      </div>
-    );
-  }
-
-  if (loading || !pageData) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
@@ -101,6 +115,14 @@ export function SEOLocationPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
         <Footer />
+      </div>
+    );
+  }
+
+  if (!pageData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        ❌ Page not found
       </div>
     );
   }
@@ -120,20 +142,12 @@ export function SEOLocationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Helmet>
-        <title>{pageData.title}</title>
-        <meta name="description" content={pageData.metaDescription} />
-        <link
-          rel="canonical"
-          href={`https://www.theprimenest.online/${pageData.slug}`}
-        />
-      </Helmet>
-
       <Navbar />
 
       <main className="flex-grow">
-        {/* Hero Section */}
+        {/* Hero */}
         <div className="bg-blue-900 text-white py-16 text-center">
+          <div className="flex justify-center mb-2">{getTypeIcon()}</div>
           <h1 className="text-4xl font-bold">{pageData.h1}</h1>
           <p className="mt-4 text-lg">{pageData.metaDescription}</p>
         </div>
@@ -143,7 +157,7 @@ export function SEOLocationPage() {
           <div
             className="prose max-w-none"
             dangerouslySetInnerHTML={{
-              __html: pageData.content.replace(/\n/g, '<br/>')
+              __html: pageData.content?.replace(/\n/g, '<br/>') || ''
             }}
           />
 
@@ -164,15 +178,17 @@ export function SEOLocationPage() {
 
           {/* FAQs */}
           <h2 className="text-2xl font-bold mt-10 mb-4">FAQs</h2>
-          {pageData.faqs.map((faq, i) => (
+
+          {pageData.faqs?.map((faq, i) => (
             <div key={i} className="mb-4">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="font-semibold"
+                className="font-semibold flex items-center gap-2"
               >
                 {faq.question}
+                {openFaq === i ? <ChevronUp /> : <ChevronDown />}
               </button>
-              {openFaq === i && <p>{faq.answer}</p>}
+              {openFaq === i && <p className="mt-2">{faq.answer}</p>}
             </div>
           ))}
         </div>
