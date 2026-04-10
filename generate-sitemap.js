@@ -1,4 +1,4 @@
-import { generateSitemap } from './lib/sitemap-generator.js';
+import { generateSitemap } from './src/lib/sitemap-generator.js';
 import fs from 'fs';
 import path from 'path';
 
