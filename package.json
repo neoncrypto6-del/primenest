@@ -16,7 +16,7 @@
     "react-router-dom": "^6.26.2",
     "lucide-react": "0.522.0",
     "@supabase/supabase-js": "^2.45.4",
-    "react-helmet": "^6.1.0"
+    "react-helmet-async": "^2.0.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.18",
