@@ -1,5 +1,5 @@
 // lib/sitemap.ts
-import { seoPages } from './seoPages';
+import { seoPages } from './seoPages.js';
 
 const DOMAIN = 'https://www.theprimenest.online';
 
@@ -28,8 +28,10 @@ export function generateSitemap(): string {
     xml += `  </url>\n`;
   });
 
-  // All SEO Location Pages
+  // SEO Location Pages
   seoPages.forEach((page) => {
+    if (!page.slug) return;
+
     xml += `  <url>\n`;
     xml += `    <loc>${DOMAIN}/${page.slug}</loc>\n`;
     xml += `    <lastmod>${today}</lastmod>\n`;
