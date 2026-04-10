@@ -28,7 +28,7 @@ export function generateSitemap(): string {
     xml += `  </url>\n`;
   });
 
-  // SEO Location Pages (All 50+ from seoPages.ts)
+  // All SEO Location Pages
   seoPages.forEach((page) => {
     xml += `  <url>\n`;
     xml += `    <loc>${DOMAIN}/${page.slug}</loc>\n`;
