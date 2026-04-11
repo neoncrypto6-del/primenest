@@ -335,6 +335,135 @@ People move to Florida for the unparalleled quality of life. The state boasts ye
   state: 'Florida'
 },
 {
+  slug: 'apartments-for-rent-in-orlando',
+  title: 'Apartments for Rent in Orlando | The Prime Nest',
+  metaDescription:
+  'Browse apartments for rent in Orlando. Discover affordable rentals near Disney, downtown Orlando, and top neighborhoods.',
+  h1: 'Apartments for Rent in Orlando',
+  content: `Orlando is one of Florida’s fastest-growing cities, known for its entertainment industry and family-friendly environment. Renting in Orlando offers a balance between affordability and lifestyle.
+
+The city is home to world-famous attractions like Disney World and Universal Studios, along with a growing tech and healthcare sector. Apartments range from modern downtown units to suburban communities with family-friendly amenities.`,
+  h2Sections: [
+  {
+    heading: 'Popular areas in Orlando',
+    content:
+    'Downtown Orlando offers urban living, while Lake Nona is popular for its modern communities and medical hub.'
+  },
+  {
+    heading: 'Average prices',
+    content:
+    'Rent typically ranges from $1,400 to $2,200 monthly.'
+  },
+  {
+    heading: 'Why choose Orlando',
+    content:
+    'Affordable living, strong job growth, and entertainment make Orlando attractive.'
+  }],
+
+  faqs: [
+  { question: 'Is Orlando affordable?', answer: 'Yes compared to Miami.' },
+  { question: 'Best area?', answer: 'Lake Nona and Downtown.' },
+  { question: 'Good for families?', answer: 'Yes, very family-friendly.' }
+  ],
+
+  relatedPages: [
+  'apartments-for-rent-in-florida',
+  'apartments-for-rent-in-miami',
+  'apartments-for-rent-in-tampa'
+  ],
+
+  propertyType: 'apartment',
+  listingType: 'rent',
+  state: 'Florida',
+  city: 'Orlando'
+},
+{
+  slug: 'apartments-for-rent-in-tampa',
+  title: 'Apartments for Rent in Tampa | The Prime Nest',
+  metaDescription:
+  'Find apartments for rent in Tampa. Explore affordable and luxury rentals in one of Florida’s fastest-growing cities.',
+  h1: 'Apartments for Rent in Tampa',
+  content: `Tampa is a rapidly growing city offering a mix of affordability, job opportunities, and coastal lifestyle. Renting an apartment in Tampa is ideal for professionals and families seeking value.
+
+The city combines modern development with waterfront living and a strong economy driven by finance, healthcare, and tourism.`,
+  h2Sections: [
+  {
+    heading: 'Popular areas in Tampa',
+    content:
+    'Downtown Tampa and Hyde Park offer modern apartments and vibrant nightlife.'
+  },
+  {
+    heading: 'Average prices',
+    content:
+    '$1,400 to $2,300 monthly.'
+  },
+  {
+    heading: 'Why choose Tampa',
+    content:
+    'Affordable coastal living with strong job growth.'
+  }],
+
+  faqs: [
+  { question: 'Is Tampa cheap?', answer: 'More affordable than Miami.' },
+  { question: 'Best neighborhoods?', answer: 'Hyde Park and Downtown.' },
+  { question: 'Good investment?', answer: 'Yes, growing market.' }
+  ],
+
+  relatedPages: [
+  'apartments-for-rent-in-florida',
+  'apartments-for-rent-in-orlando',
+  'apartments-for-rent-in-miami'
+  ],
+
+  propertyType: 'apartment',
+  listingType: 'rent',
+  state: 'Florida',
+  city: 'Tampa'
+},
+{
+  slug: 'apartments-for-rent-in-jacksonville',
+  title: 'Apartments for Rent in Jacksonville | The Prime Nest',
+  metaDescription:
+  'Discover affordable apartments for rent in Jacksonville. Find spacious rentals in Florida’s largest city.',
+  h1: 'Apartments for Rent in Jacksonville',
+  content: `Jacksonville offers some of the most affordable rental options in Florida. With its large size and growing economy, renters can find spacious apartments at competitive prices.
+
+The city is known for its beaches, suburban feel, and lower cost of living compared to other Florida cities.`,
+  h2Sections: [
+  {
+    heading: 'Popular areas',
+    content:
+    'Riverside, Downtown, and Southside are popular among renters.'
+  },
+  {
+    heading: 'Average prices',
+    content:
+    '$1,200 to $1,800 monthly.'
+  },
+  {
+    heading: 'Why choose Jacksonville',
+    content:
+    'Affordable housing and relaxed lifestyle.'
+  }],
+
+  faqs: [
+  { question: 'Is Jacksonville cheap?', answer: 'Yes, one of the most affordable cities in Florida.' },
+  { question: 'Good for families?', answer: 'Yes, very family-friendly.' },
+  { question: 'Safe?', answer: 'Depends on neighborhood, many safe areas exist.' }
+  ],
+
+  relatedPages: [
+  'apartments-for-rent-in-florida',
+  'apartments-for-rent-in-orlando',
+  'apartments-for-rent-in-tampa'
+  ],
+
+  propertyType: 'apartment',
+  listingType: 'rent',
+  state: 'Florida',
+  city: 'Jacksonville'
+},
+{
   slug: 'apartments-for-rent-in-miami',
   title: 'Apartments for Rent in Miami | The Prime Nest',
   metaDescription:
