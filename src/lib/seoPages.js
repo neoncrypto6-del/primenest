@@ -335,6 +335,51 @@ People move to Florida for the unparalleled quality of life. The state boasts ye
   state: 'Florida'
 },
 {
+  slug: 'apartments-for-rent-in-miami',
+  title: 'Apartments for Rent in Miami | The Prime Nest',
+  metaDescription:
+  'Find apartments for rent in Miami. Explore luxury high-rises, beachfront rentals, and affordable housing options in Miami, Florida.',
+  h1: 'Apartments for Rent in Miami',
+  content: `Miami is one of the most exciting cities in the United States, known for its beaches, nightlife, and global culture. Renting an apartment in Miami offers access to a fast-paced lifestyle with endless entertainment options.
+
+The city features everything from luxury waterfront apartments in Brickell to more affordable housing in neighborhoods like Little Havana and North Miami. Miami is a major international hub, attracting professionals, entrepreneurs, and creatives from around the world.
+
+With strong demand and limited space, rental prices are higher than the national average, but the lifestyle and opportunities make it worthwhile.`,
+  h2Sections: [
+  {
+    heading: 'Popular areas in Miami',
+    content:
+    'Brickell is the financial district with luxury high-rises. Wynwood offers arts and culture, while Miami Beach is ideal for beachfront living.'
+  },
+  {
+    heading: 'Average prices',
+    content:
+    'Apartments typically range from $1,800 to $3,500 depending on location and amenities.'
+  },
+  {
+    heading: 'Why choose Miami',
+    content:
+    'Miami offers a vibrant lifestyle, global business opportunities, and beautiful coastal living.'
+  }],
+
+  faqs: [
+  { question: 'Is Miami expensive?', answer: 'Yes, it is one of the most expensive rental markets in Florida.' },
+  { question: 'Best area to rent?', answer: 'Brickell and Downtown are popular choices.' },
+  { question: 'Is Miami safe?', answer: 'Yes, many neighborhoods are safe and well-developed.' }
+  ],
+
+  relatedPages: [
+  'apartments-for-rent-in-florida',
+  'apartments-for-rent-in-orlando',
+  'apartments-for-rent-in-tampa'
+  ],
+
+  propertyType: 'apartment',
+  listingType: 'rent',
+  state: 'Florida',
+  city: 'Miami'
+},
+{
   slug: 'houses-for-sale-in-miami',
   title: 'Houses for Sale in Miami | The Prime Nest',
   metaDescription:
