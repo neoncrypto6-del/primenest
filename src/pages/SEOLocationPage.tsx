@@ -47,9 +47,10 @@ export function SEOLocationPage() {
 
     setPageData(foundPage);
 
-    // ✅ SAFE SEO (REPLACES HELMET)
+    // ✅ TITLE
     document.title = foundPage.title;
 
+    // ✅ META DESCRIPTION
     let metaDesc = document.querySelector("meta[name='description']");
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -58,6 +59,7 @@ export function SEOLocationPage() {
     }
     metaDesc.setAttribute('content', foundPage.metaDescription);
 
+    // ✅ CANONICAL
     let canonical = document.querySelector("link[rel='canonical']");
     if (!canonical) {
       canonical = document.createElement('link');
@@ -69,7 +71,39 @@ export function SEOLocationPage() {
       `https://www.theprimenest.online/${foundPage.slug}`
     );
 
+    // ✅ STRUCTURED DATA (FAQ SCHEMA)
+    const existingScript = document.getElementById('faq-schema');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'faq-schema';
+
+    script.innerHTML = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": (foundPage.faqs || []).map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    });
+
+    document.head.appendChild(script);
+
     fetchListings(foundPage);
+
+    // cleanup on page change
+    return () => {
+      const existing = document.getElementById('faq-schema');
+      if (existing) existing.remove();
+    };
+
   }, [slug]);
 
   const fetchListings = async (config: SeoPageConfig) => {
@@ -191,6 +225,28 @@ export function SEOLocationPage() {
               {openFaq === i && <p className="mt-2">{faq.answer}</p>}
             </div>
           ))}
+
+          {/* ✅ INTERNAL LINKING */}
+          {pageData.relatedPages?.length > 0 && (
+            <>
+              <h2 className="text-2xl font-bold mt-10 mb-4">
+                Related Pages
+              </h2>
+
+              <ul className="list-disc pl-6">
+                {pageData.relatedPages.map((slug) => (
+                  <li key={slug}>
+                    <Link
+                      to={`/${slug}`}
+                      className="text-blue-600 underline hover:text-blue-800"
+                    >
+                      {slug.replace(/-/g, ' ')}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       </main>
 
