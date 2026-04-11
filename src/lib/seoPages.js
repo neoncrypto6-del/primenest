@@ -445,6 +445,64 @@ People move to Orlando for the exceptional quality of life. Beyond the proximity
   city: 'Orlando'
 },
 
+// FLORIDA (Apartments)
+{
+  slug: 'apartments-for-rent-in-florida',
+  title: 'Affordable Apartments for Rent in Florida | The Prime Nest',
+  metaDescription:
+  'Explore affordable apartments for rent in Florida. Discover top cities, compare rental prices, and find your ideal home across the Sunshine State.',
+  h1: 'Apartments for Rent in Florida',
+  content: `Florida, known as the Sunshine State, is one of the most desirable places to live in the United States. With its warm climate, beautiful beaches, and thriving economy, searching for apartments for rent in Florida opens up a wide range of opportunities for renters. From bustling urban centers to peaceful coastal towns, Florida offers something for everyone.
+
+The rental market in Florida is diverse, catering to young professionals, retirees, families, and remote workers. Major cities like Miami, Orlando, and Tampa offer modern high-rise apartments with luxury amenities, while smaller cities and suburban areas provide more affordable and spacious living options. Florida’s lack of state income tax is a major draw, allowing residents to enjoy more disposable income.
+
+Florida’s economy is powered by tourism, healthcare, real estate, and international business. Its lifestyle is centered around outdoor living, entertainment, and cultural diversity. Whether you're seeking a beachfront apartment or a city-center lifestyle, Florida provides endless rental opportunities.`,
+  h2Sections: [
+  {
+    heading: 'Popular areas in Florida',
+    content:
+    'Miami offers a vibrant international lifestyle with nightlife and beaches. Orlando is ideal for families and entertainment lovers, with theme parks and growing job opportunities. Tampa provides a balanced mix of affordability and urban living, while Jacksonville offers spacious living and lower rent costs.'
+  },
+  {
+    heading: 'Average rental prices',
+    content:
+    'Rental prices vary by city. Miami apartments range from $1,800 to $3,000 monthly. Orlando and Tampa typically range from $1,400 to $2,200, while Jacksonville offers more affordable options from $1,200 to $1,800.'
+  },
+  {
+    heading: 'Why rent in Florida',
+    content:
+    'Florida offers a unique lifestyle with year-round sunshine, no state income tax, and access to world-class beaches and entertainment. The growing economy and diverse housing options make it an attractive destination for renters.'
+  }],
+
+  faqs: [
+  {
+    question: 'Is Florida expensive for renting apartments?',
+    answer:
+    'It depends on the city. Miami is more expensive, while cities like Jacksonville and Tampa are more affordable.'
+  },
+  {
+    question: 'Are apartments in Florida pet-friendly?',
+    answer:
+    'Yes, many apartment complexes in Florida are pet-friendly, though fees may apply.'
+  },
+  {
+    question: 'Do apartments in Florida include utilities?',
+    answer:
+    'Most rentals do not include utilities, so tenants typically pay separately for electricity, water, and internet.'
+  }],
+
+  relatedPages: [
+  'apartments-for-rent-in-miami',
+  'apartments-for-rent-in-orlando',
+  'apartments-for-rent-in-tampa',
+  'apartments-for-rent-in-jacksonville'
+  ],
+
+  propertyType: 'apartment',
+  listingType: 'rent',
+  state: 'Florida'
+},
+  
 // CALIFORNIA (Land)
 {
   slug: 'land-for-sale-in-california',
