@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase, Property } from '../../lib/supabase';
-import { X, Upload, Loader2, Plus, Trash2, User, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Loader2, Plus, Trash2, User } from 'lucide-react';
 
 interface PropertyFormProps {
   property?: Property | null;
@@ -17,10 +17,6 @@ export function PropertyForm({
   const [uploading, setUploading] = useState(false);
   const [uploadingAgent, setUploadingAgent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [formData, setFormData] = useState<Partial<Property>>({
     title: '',
     description: '',
@@ -44,8 +40,8 @@ export function PropertyForm({
     agent_email: 'lorawale9639@outlook.com',
     agent_image: ''
   });
-
   const [featureInput, setFeatureInput] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (property) {
@@ -59,7 +55,9 @@ export function PropertyForm({
     }
   }, [property]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -84,19 +82,19 @@ export function PropertyForm({
     }));
   };
 
-  // Smart Image Upload Function
-  const uploadImage = async (file: File) => {
+  // ==================== IMPROVED IMAGE UPLOAD SECTION ====================
+  const uploadImageFile = async (file: File) => {
     try {
       setUploading(true);
       setError(null);
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('property-images')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
@@ -109,25 +107,16 @@ export function PropertyForm({
         images: [...(prev.images || []), data.publicUrl]
       }));
     } catch (err: any) {
-      setError(err.message || 'Failed to upload image');
+      setError(err.message || 'Error uploading image');
     } finally {
       setUploading(false);
     }
   };
 
-  // Handle File Input + Drag & Drop + Paste
-  const handleFiles = (files: FileList | File[]) => {
-    Array.from(files).forEach(file => {
-      if (file.type.startsWith('image/')) {
-        uploadImage(file);
-      }
-    });
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(e.target.files);
-    }
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    await uploadImageFile(file);
   };
 
   // Drag & Drop Handlers
@@ -141,31 +130,31 @@ export function PropertyForm({
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files) {
-      handleFiles(e.dataTransfer.files);
+
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    );
+
+    for (const file of files) {
+      await uploadImageFile(file);
     }
   };
 
   // Paste from Clipboard
-  const handlePaste = useCallback((e: ClipboardEvent) => {
+  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
 
     for (const item of items) {
       if (item.type.indexOf('image') !== -1) {
         const file = item.getAsFile();
-        if (file) uploadImage(file);
+        if (file) await uploadImageFile(file);
       }
     }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
-  }, [handlePaste]);
+  };
 
   const handleRemoveImage = (urlToRemove: string) => {
     setFormData((prev) => ({
@@ -173,19 +162,18 @@ export function PropertyForm({
       images: prev.images?.filter((url) => url !== urlToRemove)
     }));
   };
+  // ==================== END OF IMPROVED IMAGE SECTION ====================
 
-  // Agent Image Upload (unchanged)
   const handleAgentImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-    const file = e.target.files[0];
-
     try {
       setUploadingAgent(true);
       setError(null);
+      if (!e.target.files || e.target.files.length === 0) return;
 
+      const file = e.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const fileName = `agent-${Date.now()}.${fileExt}`;
-      const filePath = fileName;
+      const fileName = `agent-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('property-images')
@@ -197,9 +185,12 @@ export function PropertyForm({
         .from('property-images')
         .getPublicUrl(filePath);
 
-      setFormData((prev) => ({ ...prev, agent_image: data.publicUrl }));
+      setFormData((prev) => ({
+        ...prev,
+        agent_image: data.publicUrl
+      }));
     } catch (err: any) {
-      setError(err.message || 'Failed to upload agent image');
+      setError(err.message || 'Error uploading agent image');
     } finally {
       setUploadingAgent(false);
     }
@@ -209,7 +200,6 @@ export function PropertyForm({
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       if (property?.id) {
         const { error } = await supabase
@@ -236,7 +226,9 @@ export function PropertyForm({
           <h3 className="text-2xl font-bold text-gray-900">
             {property ? 'Edit Property' : 'Add New Property'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500">
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -248,80 +240,314 @@ export function PropertyForm({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ... (Keep all your existing form fields unchanged) ... */}
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={formData.title}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
 
-          {/* PROPERTY IMAGES - SMART UPLOAD SECTION */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                name="description"
+                rows={4}
+                value={formData.description}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Price ($) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                required
+                min="0"
+                value={formData.price}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
+                <option value="active">Active</option>
+                <option value="sold">Sold</option>
+                <option value="rented">Rented</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Property Type *
+              </label>
+              <select
+                name="property_type"
+                required
+                value={formData.property_type}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
+                <option value="house">House</option>
+                <option value="apartment">Apartment</option>
+                <option value="land">Land</option>
+                <option value="office">Office</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Listing Type *
+              </label>
+              <select
+                name="listing_type"
+                required
+                value={formData.listing_type}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Location</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  required
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  required
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    required
+                    value={formData.state}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    ZIP Code *
+                  </label>
+                  <input
+                    type="text"
+                    name="zip_code"
+                    required
+                    value={formData.zip_code}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Details</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Beds</label>
+                <input type="number" name="beds" min="0" value={formData.beds} onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Baths</label>
+                <input type="number" name="baths" min="0" step="0.5" value={formData.baths} onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">SqFt</label>
+                <input type="number" name="sqft" min="0" value={formData.sqft} onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Year Built</label>
+                <input type="number" name="year_built" value={formData.year_built || ''} onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Lot Size (e.g., "0.5 acres")</label>
+                <input type="text" name="lot_size" value={formData.lot_size || ''} onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* Agent Information */}
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <User className="w-5 h-5 mr-2" />
+              Agent Information
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Agent Name</label>
+                <input type="text" name="agent_name" value={formData.agent_name || ''} onChange={handleChange}
+                  placeholder="Lora Wale" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Agent Phone</label>
+                <input type="text" name="agent_phone" value={formData.agent_phone || ''} onChange={handleChange}
+                  placeholder="+1 850-641-8765" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Agent Email</label>
+                <input type="email" name="agent_email" value={formData.agent_email || ''} onChange={handleChange}
+                  placeholder="lorawale9639@outlook.com" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Agent Photo</label>
+                <div className="mt-1 flex items-center gap-4">
+                  {formData.agent_image && (
+                    <img src={formData.agent_image} alt="Agent" className="w-12 h-12 rounded-full object-cover" />
+                  )}
+                  <label className="cursor-pointer bg-white border border-gray-300 rounded-md shadow-sm py-2 px-4 inline-flex items-center text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    {uploadingAgent ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Upload className="w-5 h-5 mr-2 text-gray-400" />}
+                    Upload
+                    <input type="file" className="hidden" accept="image/*" onChange={handleAgentImageUpload} disabled={uploadingAgent} />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Features & Amenities</h4>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={featureInput}
+                onChange={(e) => setFeatureInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddFeature())}
+                placeholder="Add a feature (e.g., Pool, Hardwood Floors)"
+                className="flex-grow border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500" />
+              <button type="button" onClick={handleAddFeature}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-md border border-gray-300 flex items-center">
+                <Plus className="w-4 h-4 mr-1" /> Add
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.features?.map((feature, idx) => (
+                <span key={idx} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center border border-blue-200">
+                  {feature}
+                  <button type="button" onClick={() => handleRemoveFeature(feature)}
+                    className="ml-2 text-blue-500 hover:text-blue-800">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* ==================== IMPROVED PROPERTY IMAGES SECTION ==================== */}
           <div className="border-t border-gray-200 pt-6">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Property Images</h4>
-
-            {/* Drag & Drop Area */}
+            
+            {/* Drag & Drop Zone */}
             <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                isDragging 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+              className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors ${
+                isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onPaste={handlePaste}
             >
-              <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <ImageIcon className="w-6 h-6 text-gray-500" />
-              </div>
+              <Upload className="w-10 h-10 mx-auto text-gray-400 mb-3" />
               <p className="text-gray-700 font-medium">
-                Drag & drop images here
+                Drag & drop images here, or click to upload
               </p>
-              <p className="text-sm text-gray-500 mt-1">or click to upload</p>
-              <p className="text-xs text-gray-400 mt-2">You can also paste images with Ctrl + V</p>
+              <p className="text-sm text-gray-500 mt-1">You can also paste images from clipboard</p>
+              <label className="cursor-pointer mt-4 inline-block bg-white border border-gray-300 rounded-md shadow-sm py-2 px-6 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Select Files
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
+              </label>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-
             {/* Image Previews */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {formData.images?.map((url, idx) => (
-                <div key={idx} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                <div
+                  key={idx}
+                  className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                   <img
                     src={url}
                     alt={`Property ${idx}`}
-                    className="w-full h-full object-cover"
-                  />
+                    className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(url)}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
-                  >
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Rest of your form (Agent info, Features, Submit buttons) remains the same */}
-          {/* ... keep everything below unchanged ... */}
+          {/* ==================== END OF IMPROVED SECTION ==================== */}
 
           <div className="border-t border-gray-200 pt-6 flex justify-end gap-4">
             <button
               type="button"
               onClick={onClose}
-              className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
+              className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-            >
+              className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
               {loading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
               {property ? 'Update Property' : 'Save Property'}
             </button>
