@@ -1,6 +1,6 @@
 import { seoPages } from './seoPages.js';
 
-const DOMAIN = 'https://www.theprimenest.online';
+const DOMAIN = 'https://www.primenestus.online';
 
 export function generateSitemap() {
   const today = new Date().toISOString().split('T')[0];
