@@ -68,7 +68,7 @@ export function SEOLocationPage() {
     }
     canonical.setAttribute(
       'href',
-      `https://www.theprimenest.online/${foundPage.slug}`
+      `https://www.primenestus.online/${foundPage.slug}`
     );
 
     // ✅ STRUCTURED DATA (FAQ SCHEMA)
